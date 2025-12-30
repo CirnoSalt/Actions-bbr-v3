@@ -13,7 +13,7 @@ jobs:
       - name: 删除旧的工作流运行记录
         uses: Mattraks/delete-workflow-runs@main
         with:
-          retain_days: 0       # 保留 0 天的记录
+          retain_days: 0        # 保留 0 天的记录
           keep_minimum_runs: 0 # 至少保留 0 次记录
 
   build:
@@ -68,6 +68,14 @@ jobs:
           git fetch google-bbr
           git checkout google-bbr/v3
 
+      - name: 编译声明
+        working-directory: ./kernel/linux
+        run: |
+          sed -i 's/MODULE_DESCRIPTION("TCP BBR (Bottleneck Bandwidth and RTT)");/MODULE_DESCRIPTION("TCP BBR v3 (Bottleneck Bandwidth and RTT) - Compiled & Optimized by Joey");/' net/ipv4/tcp_bbr.c
+          
+          echo "Checking modification:"
+          grep "MODULE_DESCRIPTION" net/ipv4/tcp_bbr.c
+
       - name: 更新 Makefile 中的版本号
         working-directory: ./kernel/linux
         run: |
@@ -115,4 +123,4 @@ jobs:
         with:
           tag_name: ${{ matrix.arch }}-${{ env.KERNEL_VERSION }}
           files: ./kernel/linux-*.deb
-          body: "带有 BBRv3 的最新内核，适用于 ${{ matrix.arch }} 架构"
+          body: "带有 BBRv3 的最新内核，适用于 ${{ matrix.arch }} 架构。Compiled & Optimized by Joey."
