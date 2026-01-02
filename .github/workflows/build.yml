@@ -13,8 +13,8 @@ jobs:
       - name: 删除旧的工作流运行记录
         uses: Mattraks/delete-workflow-runs@main
         with:
-          retain_days: 0        # 保留 0 天的记录
-          keep_minimum_runs: 0 # 至少保留 0 次记录
+          retain_days: 0
+          keep_minimum_runs: 0
 
   build:
     needs: cleanup
@@ -71,10 +71,12 @@ jobs:
       - name: 编译声明
         working-directory: ./kernel/linux
         run: |
-          sed -i 's/MODULE_DESCRIPTION("TCP BBR (Bottleneck Bandwidth and RTT)");/MODULE_DESCRIPTION("TCP BBR v3 (Bottleneck Bandwidth and RTT) - Compiled & Optimized by Joey");/' net/ipv4/tcp_bbr.c
+          grep -v "MODULE_DESCRIPTION" net/ipv4/tcp_bbr.c > net/ipv4/tcp_bbr.c.tmp
+          mv net/ipv4/tcp_bbr.c.tmp net/ipv4/tcp_bbr.c
           
-          echo "Checking modification:"
-          grep "MODULE_DESCRIPTION" net/ipv4/tcp_bbr.c
+          echo 'MODULE_DESCRIPTION("TCP BBR v3 (Bottleneck Bandwidth and RTT) - Compiled & Optimized by Joey");' >> net/ipv4/tcp_bbr.c
+          
+          tail -n 5 net/ipv4/tcp_bbr.c
 
       - name: 更新 Makefile 中的版本号
         working-directory: ./kernel/linux
@@ -84,16 +86,21 @@ jobs:
           sed -i "s/^PATCHLEVEL *=.*/PATCHLEVEL = $p/" Makefile
           sed -i "s/^SUBLEVEL *=.*/SUBLEVEL = $s/" Makefile
 
-      - name: 准备 .config
+      - name: 准备 .config 并禁用证书检查
         working-directory: ./kernel/linux
         run: |
           if [ "${{ matrix.arch }}" = "arm64" ]; then
-            curl -sSL https://raw.githubusercontent.com/byJoey/Actions-bbr-v3/main/arm64.config \
-              > .config
+            curl -sSL https://raw.githubusercontent.com/byJoey/Actions-bbr-v3/main/arm64.config > .config
+          else
+            curl -sSL https://raw.githubusercontent.com/byJoey/Actions-bbr-v3/main/x86-64.config > .config
+          fi
+
+          scripts/config --disable SYSTEM_TRUSTED_KEYS
+          scripts/config --disable SYSTEM_REVOCATION_KEYS
+          
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
             make ARCH=arm64 olddefconfig
           else
-            curl -sSL https://raw.githubusercontent.com/byJoey/Actions-bbr-v3/main/x86-64.config \
-              > .config
             make olddefconfig
           fi
 
