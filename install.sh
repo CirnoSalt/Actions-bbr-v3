@@ -172,7 +172,7 @@ install_packages() {
 # 函数：检查并安装最新版本
 install_latest_version() {
     echo -e "\033[36m正在从 GitHub 获取最新版本信息...\033[0m"
-    BASE_URL="https://api.github.com/repos/byJoey/Actions-bbr-v3/releases"
+    BASE_URL="https://ghproxy.net/https://api.github.com/repos/byJoey/Actions-bbr-v3/releases"
     RELEASE_DATA=$(curl -sL "$BASE_URL")
     if [[ -z "$RELEASE_DATA" ]]; then
         echo -e "\033[31m从 GitHub 获取版本信息失败。请检查网络连接或 API 状态。\033[0m"
@@ -209,8 +209,10 @@ install_latest_version() {
     rm -f /tmp/linux-*.deb
 
     for URL in $ASSET_URLS; do
-        echo -e "\033[36m正在下载文件：$URL\033[0m"
-        wget -q --show-progress "$URL" -P /tmp/ || { echo -e "\033[31m下载失败：$URL\033[0m"; return 1; }
+        # 添加 GitHub 加速
+        ACCELERATED_URL="https://ghproxy.net/$URL"
+        echo -e "\033[36m正在下载文件：$ACCELERATED_URL\033[0m"
+        wget -q --show-progress "$ACCELERATED_URL" -P /tmp/ || { echo -e "\033[31m下载失败：$ACCELERATED_URL\033[0m"; return 1; }
     done
     
     install_packages
@@ -218,7 +220,7 @@ install_latest_version() {
 
 # 函数：安装指定版本
 install_specific_version() {
-    BASE_URL="https://api.github.com/repos/byJoey/Actions-bbr-v3/releases"
+    BASE_URL="https://ghproxy.net/https://api.github.com/repos/byJoey/Actions-bbr-v3/releases"
     RELEASE_DATA=$(curl -s "$BASE_URL")
     if [[ -z "$RELEASE_DATA" ]]; then
         echo -e "\033[31m从 GitHub 获取版本信息失败。请检查网络连接或 API 状态。\033[0m"
@@ -260,8 +262,10 @@ install_specific_version() {
     rm -f /tmp/linux-*.deb
     
     for URL in $ASSET_URLS; do
-        echo -e "\033[36m下载中：$URL\033[0m"
-        wget -q --show-progress "$URL" -P /tmp/ || { echo -e "\033[31m下载失败：$URL\033[0m"; return 1; }
+        # 添加 GitHub 加速
+        ACCELERATED_URL="https://ghproxy.net/$URL"
+        echo -e "\033[36m下载中：$ACCELERATED_URL\033[0m"
+        wget -q --show-progress "$ACCELERATED_URL" -P /tmp/ || { echo -e "\033[31m下载失败：$ACCELERATED_URL\033[0m"; return 1; }
     done
 
     install_packages
